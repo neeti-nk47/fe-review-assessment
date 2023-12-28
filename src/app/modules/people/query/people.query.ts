@@ -18,6 +18,7 @@ export const usePeopleQuery = (): PeopleQueryState => {
   const fetchPeoples = async () => {
     try {
       const { data } = await axios.get<Person[]>(`/${API_RESOURCE.PEOPLE}`);
+      // console.log(data);
 
       setState({ data, loading: false, error: undefined });
     } catch (error) {
