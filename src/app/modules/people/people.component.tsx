@@ -1,34 +1,27 @@
 import { Person } from "./model";
-import { usePeopleQuery } from "./query";
+import { Order, usePeopleQuery } from "./query";
 
 import "./people.css";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export function People() {
-  const { data: people, loading, error } = usePeopleQuery();
-  const [value, setValue] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
+  const [input, setInput] = useState<string>("");
 
-  const [isAsc, setIsAsc] = useState<boolean>(true);
+  const [order, setOrder] = useState<Order>(Order.Asc);
   const [currentPeople, setCurrentPeople] = useState<Person[]>([]);
 
   const [limit, setLimit] = useState<number>(10);
   const [startIndex, setStartIndex] = useState<number>(1);
   const [endIndex, setEndIndex] = useState<number>(10);
 
-  useEffect(() => {
-    if (people) {
-      let newPeople = people.sort((a, b) => {
-        if (a.name < b.name) {
-          return -1;
-        } else {
-          return 1;
-        }
-      });
-      setCurrentPeople(newPeople.slice(startIndex - 1, endIndex));
-    }
-  }, [people]);
+  const {
+    data: people,
+    loading,
+    error,
+  } = usePeopleQuery({ limit, order, search, startIndex, endIndex });
 
-  const Showing = `Showing ${startIndex}-${endIndex} of ${people?.length}`;
+  const Showing = `Showing ${startIndex}-${endIndex} of 100`;
 
   const renderCells = ({ name, show, actor, movies, dob }: Person) => (
     <>
@@ -44,17 +37,22 @@ export function People() {
     </>
   );
 
-  const rows = currentPeople.map((people, index) => (
-    <tr key={index}>{renderCells(people)}</tr>
-  ));
+  const rows = useMemo(() => {
+    return people ? (
+      people.map((person: Person) => (
+        <tr key={person.id}>{renderCells(person)}</tr>
+      ))
+    ) : (
+      <></>
+    );
+  }, [people]);
 
-  const defaultRows = people ? (
-    people
-      .slice(0, 10)
-      .map((people, ind) => <tr key={ind}>{renderCells(people)}</tr>)
-  ) : (
-    <></>
-  );
+  useEffect(() => {
+    let timeout = setTimeout(() => {
+      setSearch(input);
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, [input]);
 
   if (loading) {
     return <p>Fetching People...</p>;
@@ -63,26 +61,14 @@ export function People() {
   if (people === undefined || error) {
     return <h2>Oops! looks like something went wrong!</h2>;
   }
-  console.log(people[0].name);
 
   const handleChange = (val: string) => {
-    setValue(val);
-    let newPeople = people.filter((person: Person) =>
-      person.name.includes(val)
-    );
-    setCurrentPeople(newPeople.slice(0, 10));
+    setInput(val);
   };
 
   const handleSort = () => {
-    setIsAsc(!isAsc);
-    let newPeople = people.sort((a, b) => {
-      if (a.name < b.name) {
-        return isAsc ? 1 : -1;
-      } else {
-        return isAsc ? -1 : 1;
-      }
-    });
-    setCurrentPeople(newPeople.slice(startIndex - 1, endIndex));
+    let newOrder = order === Order.Asc ? Order.Desc : Order.Asc;
+    setOrder(newOrder);
   };
 
   const onLimitChange = (val: number) => {
@@ -93,34 +79,21 @@ export function People() {
   };
 
   const handleNext = () => {
-    let firstVal = startIndex + limit - 1;
-    let lastValue = endIndex + limit;
-    setCurrentPeople(people.slice(firstVal, lastValue));
     setStartIndex(startIndex + limit);
     setEndIndex(endIndex + limit);
   };
 
   const handleLast = () => {
-    let firstVal = people.length - limit;
-    let lastValue = people.length;
-    setCurrentPeople(people.slice(firstVal, lastValue));
-    setStartIndex(people.length - limit + 1);
-    setEndIndex(people.length);
+    setStartIndex(100 - limit + 1);
+    setEndIndex(100);
   };
 
   const handlePrevious = () => {
-    let firstVal = startIndex - limit - 1;
-    let lastValue = endIndex - limit;
-    setCurrentPeople(people.slice(firstVal, lastValue));
-
     setStartIndex(startIndex - limit);
     setEndIndex(endIndex - limit);
   };
 
   const handleFirst = () => {
-    let firstVal = 0;
-    let lastValue = limit;
-    setCurrentPeople(people.slice(firstVal, lastValue));
     setStartIndex(1);
     setEndIndex(limit);
   };
@@ -133,7 +106,7 @@ export function People() {
           type="text"
           role="textbox"
           aria-label="Search"
-          value={value}
+          value={input}
           onChange={(e) => handleChange(e.target.value)}
         />
         <select value={limit} onChange={(e) => onLimitChange(+e.target.value)}>
@@ -149,7 +122,7 @@ export function People() {
         <thead>
           <tr>
             <th
-              aria-sort={isAsc ? "ascending" : "descending"}
+              aria-sort={order === Order.Asc ? "ascending" : "descending"}
               onClick={handleSort}
             >
               Name
@@ -169,30 +142,26 @@ export function People() {
         <button
           onClick={handleFirst}
           disabled={startIndex === 1}
-          className="buttons"
+          // className="buttons"
         >
           First
         </button>
         <button
           onClick={handlePrevious}
           disabled={startIndex === 1}
-          className="buttons"
+          // className="buttons"
         >
           Previous
         </button>
         <span>{Showing}</span>
         <button
           onClick={handleNext}
-          disabled={endIndex === people.length}
-          className="buttons"
+          disabled={endIndex === 100}
+          // className="buttons"
         >
           Next
         </button>
-        <button
-          onClick={handleLast}
-          disabled={endIndex === people.length}
-          className="buttons"
-        >
+        <button onClick={handleLast} disabled={endIndex === 100}>
           Last
         </button>
       </div>
