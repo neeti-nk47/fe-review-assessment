@@ -5,3 +5,31 @@ table {
 th {
   text-align: left;
 }
+
+.flex {
+  display: flex;
+  padding: 10px;
+  gap: 5px;
+  justify-content: center;
+  align-content: center;
+}
+
+span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.buttons {
+  border: 0;
+  outline: 0;
+  cursor: pointer;
+  color: white;
+  background-color: rgb(84, 105, 212);
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 8px;
+  display: inline-block;
+  min-height: 28px;
+  transition: background-color 0.24s, box-shadow 0.24s;
+}
