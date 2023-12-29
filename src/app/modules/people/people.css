@@ -14,7 +14,7 @@ th {
   align-content: center;
 }
 
-span {
+.span {
   font-size: 14px;
   font-weight: 600;
 }
@@ -22,14 +22,30 @@ span {
 .buttons {
   border: 0;
   outline: 0;
-  cursor: pointer;
   color: white;
-  background-color: rgb(84, 105, 212);
+  background-color: #0f77ff;
   border-radius: 4px;
   font-size: 14px;
-  font-weight: 500;
   padding: 4px 8px;
-  display: inline-block;
-  min-height: 28px;
-  transition: background-color 0.24s, box-shadow 0.24s;
+}
+
+.buttons:disabled {
+  background-color: #352d45;
+  cursor: not-allowed;
+}
+
+.filters {
+  display: flex;
+  justify-content: space-evenly;
+  margin-bottom: 10px;
+}
+
+.inputs {
+  border-radius: 4px;
+  padding-left: 12px;
+  font-size: 14px;
+  font-weight: normal;
+  border: 1px solid rgb(137, 151, 155);
+  color: rgb(33, 49, 60);
+  padding-right: 12px;
 }

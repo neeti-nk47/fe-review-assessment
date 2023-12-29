@@ -80,7 +80,7 @@ export function People() {
 
   const handleNext = () => {
     setStartIndex(startIndex + limit);
-    setEndIndex(endIndex + limit);
+    setEndIndex(Math.min(endIndex + limit, 100));
   };
 
   const handleLast = () => {
@@ -89,7 +89,7 @@ export function People() {
   };
 
   const handlePrevious = () => {
-    setStartIndex(startIndex - limit);
+    setStartIndex(Math.max(1, startIndex - limit));
     setEndIndex(endIndex - limit);
   };
 
@@ -100,22 +100,33 @@ export function People() {
 
   return (
     <>
-      <div className="flex">
+      <div className="filters">
         <p style={people && { display: "none" }}>No People Available.</p>
-        <input
-          type="text"
-          role="textbox"
-          aria-label="Search"
-          value={input}
-          onChange={(e) => handleChange(e.target.value)}
-        />
-        <select value={limit} onChange={(e) => onLimitChange(+e.target.value)}>
-          <option value={10}>10</option>
-          <option value={15}>15</option>
-          <option value={20}>20</option>
-          <option value={25}>25</option>
-          <option value={30}>30</option>
-        </select>
+        <div className="flex">
+          <label className="span">Search by name:</label>
+          <input
+            className="inputs"
+            type="text"
+            role="textbox"
+            aria-label="Search"
+            value={input}
+            onChange={(e) => handleChange(e.target.value)}
+          />
+        </div>
+        <div className="flex">
+          <label className="span">Items per page:</label>
+          <select
+            className="inputs"
+            value={limit}
+            onChange={(e) => onLimitChange(+e.target.value)}
+          >
+            <option value={10}>10</option>
+            <option value={15}>15</option>
+            <option value={20}>20</option>
+            <option value={25}>25</option>
+            <option value={30}>30</option>
+          </select>
+        </div>
       </div>
 
       <table>
@@ -134,7 +145,6 @@ export function People() {
           </tr>
         </thead>
 
-        {/* <tbody>{currentPeople.length === 0 ? <>{defaultRows}</> : rows}</tbody> */}
         <tbody>{rows}</tbody>
       </table>
 
@@ -142,26 +152,30 @@ export function People() {
         <button
           onClick={handleFirst}
           disabled={startIndex === 1}
-          // className="buttons"
+          className="buttons"
         >
           First
         </button>
         <button
           onClick={handlePrevious}
           disabled={startIndex === 1}
-          // className="buttons"
+          className="buttons"
         >
           Previous
         </button>
-        <span>{Showing}</span>
+        <span className="span">{Showing}</span>
         <button
           onClick={handleNext}
           disabled={endIndex === 100}
-          // className="buttons"
+          className="buttons"
         >
           Next
         </button>
-        <button onClick={handleLast} disabled={endIndex === 100}>
+        <button
+          onClick={handleLast}
+          disabled={endIndex === 100}
+          className="buttons"
+        >
           Last
         </button>
       </div>

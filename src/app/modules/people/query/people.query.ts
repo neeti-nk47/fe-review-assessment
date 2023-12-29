@@ -55,7 +55,7 @@ export const usePeopleQuery = ({
     setState({ loading: true });
 
     fetchPeoples();
-  }, [limit, order, search]);
+  }, [limit, order, search, startIndex, endIndex]);
 
   const value = useMemo(() => state, [state]);
 
