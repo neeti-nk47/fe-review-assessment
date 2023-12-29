@@ -2,23 +2,34 @@ import { Person } from "./model";
 import { usePeopleQuery } from "./query";
 
 import "./people.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function People() {
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [perPage, setPerPage] = useState<number>(10);
   const { data: people, loading, error } = usePeopleQuery();
-  const indexLastPerson = currentPage * perPage;
-  const indexFirstPerson = indexLastPerson - perPage;
+  const [value, setValue] = useState<string>("");
 
-  const currentPeople = people?.slice(indexFirstPerson, indexLastPerson) ?? [];
-  const totalPages = people?.length ? Math.ceil(people.length / perPage) : 1;
-  const startRange = indexFirstPerson + 1;
-  const endRange = Math.min(indexLastPerson);
+  const [isAsc, setIsAsc] = useState<boolean>(true);
+  const [currentPeople, setCurrentPeople] = useState<Person[]>([]);
 
-  const gotoPage = (page: number) => {
-    setCurrentPage(page);
-  };
+  const [limit, setLimit] = useState<number>(10);
+  const [startIndex, setStartIndex] = useState<number>(1);
+  const [endIndex, setEndIndex] = useState<number>(10);
+
+  useEffect(() => {
+    if (people) {
+      let newPeople = people.sort((a, b) => {
+        if (a.name < b.name) {
+          return -1;
+        } else {
+          return 1;
+        }
+      });
+      setCurrentPeople(newPeople.slice(startIndex - 1, endIndex));
+    }
+  }, [people]);
+
+  const Showing = `Showing ${startIndex}-${endIndex} of ${people?.length}`;
+
   const renderCells = ({ name, show, actor, movies, dob }: Person) => (
     <>
       <td>{name}</td>
@@ -33,6 +44,18 @@ export function People() {
     </>
   );
 
+  const rows = currentPeople.map((people, index) => (
+    <tr key={index}>{renderCells(people)}</tr>
+  ));
+
+  const defaultRows = people ? (
+    people
+      .slice(0, 10)
+      .map((people, ind) => <tr key={ind}>{renderCells(people)}</tr>)
+  ) : (
+    <></>
+  );
+
   if (loading) {
     return <p>Fetching People...</p>;
   }
@@ -40,16 +63,97 @@ export function People() {
   if (people === undefined || error) {
     return <h2>Oops! looks like something went wrong!</h2>;
   }
-  // if (people.length === 0) {
-  //   return <h2>No People Available.</h2>;
-  // }
+  console.log(people[0].name);
+
+  const handleChange = (val: string) => {
+    setValue(val);
+    let newPeople = people.filter((person: Person) =>
+      person.name.includes(val)
+    );
+    setCurrentPeople(newPeople.slice(0, 10));
+  };
+
+  const handleSort = () => {
+    setIsAsc(!isAsc);
+    let newPeople = people.sort((a, b) => {
+      if (a.name < b.name) {
+        return isAsc ? 1 : -1;
+      } else {
+        return isAsc ? -1 : 1;
+      }
+    });
+    setCurrentPeople(newPeople.slice(startIndex - 1, endIndex));
+  };
+
+  const onLimitChange = (val: number) => {
+    setLimit(val);
+    setStartIndex(1);
+    setEndIndex(val);
+    setCurrentPeople(people?.slice(0, val));
+  };
+
+  const handleNext = () => {
+    let firstVal = startIndex + limit - 1;
+    let lastValue = endIndex + limit;
+    setCurrentPeople(people.slice(firstVal, lastValue));
+    setStartIndex(startIndex + limit);
+    setEndIndex(endIndex + limit);
+  };
+
+  const handleLast = () => {
+    let firstVal = people.length - limit;
+    let lastValue = people.length;
+    setCurrentPeople(people.slice(firstVal, lastValue));
+    setStartIndex(people.length - limit + 1);
+    setEndIndex(people.length);
+  };
+
+  const handlePrevious = () => {
+    let firstVal = startIndex - limit - 1;
+    let lastValue = endIndex - limit;
+    setCurrentPeople(people.slice(firstVal, lastValue));
+
+    setStartIndex(startIndex - limit);
+    setEndIndex(endIndex - limit);
+  };
+
+  const handleFirst = () => {
+    let firstVal = 0;
+    let lastValue = limit;
+    setCurrentPeople(people.slice(firstVal, lastValue));
+    setStartIndex(1);
+    setEndIndex(limit);
+  };
 
   return (
     <>
+      <div className="flex">
+        <p style={people && { display: "none" }}>No People Available.</p>
+        <input
+          type="text"
+          role="textbox"
+          aria-label="Search"
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+        />
+        <select value={limit} onChange={(e) => onLimitChange(+e.target.value)}>
+          <option value={10}>10</option>
+          <option value={15}>15</option>
+          <option value={20}>20</option>
+          <option value={25}>25</option>
+          <option value={30}>30</option>
+        </select>
+      </div>
+
       <table>
         <thead>
           <tr>
-            <th>Name</th>
+            <th
+              aria-sort={isAsc ? "ascending" : "descending"}
+              onClick={handleSort}
+            >
+              Name
+            </th>
             <th>Show</th>
             <th>Actor/Actress</th>
             <th>Date of birth</th>
@@ -57,40 +161,37 @@ export function People() {
           </tr>
         </thead>
 
-        <tbody>
-          {currentPeople?.map((people, index) => (
-            <tr key={index}>{renderCells(people)}</tr>
-          ))}
-        </tbody>
+        {/* <tbody>{currentPeople.length === 0 ? <>{defaultRows}</> : rows}</tbody> */}
+        <tbody>{rows}</tbody>
       </table>
 
-      <div>
-        <select onChange={(e) => setPerPage(+e.target.value)}>
-          <option value={10}>10</option>
-          <option value={15}>15</option>
-          <option value={20}>20</option>
-        </select>
-        <button onClick={() => gotoPage(1)} disabled={currentPage === 1}>
+      <div className="flex">
+        <button
+          onClick={handleFirst}
+          disabled={startIndex === 1}
+          className="buttons"
+        >
           First
         </button>
         <button
-          onClick={() => setCurrentPage(currentPage - 1)}
-          disabled={currentPage === 1}
+          onClick={handlePrevious}
+          disabled={startIndex === 1}
+          className="buttons"
         >
           Previous
         </button>
-        <span>
-          Showing {startRange}-{endRange} of {people?.length}
-        </span>
+        <span>{Showing}</span>
         <button
-          onClick={() => setCurrentPage(currentPage + 1)}
-          disabled={currentPage === totalPages}
+          onClick={handleNext}
+          disabled={endIndex === people.length}
+          className="buttons"
         >
           Next
         </button>
         <button
-          onClick={() => gotoPage(totalPages)}
-          disabled={currentPage === totalPages}
+          onClick={handleLast}
+          disabled={endIndex === people.length}
+          className="buttons"
         >
           Last
         </button>
